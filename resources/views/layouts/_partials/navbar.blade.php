@@ -134,18 +134,20 @@
                                 class="nav-link dropdown-toggle nav-link-lg nav-link-user"> <img alt="image" src="assets/img/user.png"
                                                                                                  class="user-img-radious-style"> <span class="d-sm-none d-lg-inline-block"></span></a>
             <div class="dropdown-menu dropdown-menu-right pullDown">
-                <div class="dropdown-title">Hello Sarah Smith</div>
-                <a href="profile.html" class="dropdown-item has-icon"> <i class="far
-										fa-user"></i> Profile
+                <div class="dropdown-title">Hello {{ Auth::user()->name }}</div>
+                <a href="profile.html" class="dropdown-item has-icon"> <i class="far fa-user"></i> Profile
                 </a> <a href="timeline.html" class="dropdown-item has-icon"> <i class="fas fa-bolt"></i>
                     Activities
                 </a> <a href="#" class="dropdown-item has-icon"> <i class="fas fa-cog"></i>
                     Settings
                 </a>
                 <div class="dropdown-divider"></div>
-                <a href="auth-login.html" class="dropdown-item has-icon text-danger"> <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </a>
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <button type="button" id="swal-6" class="dropdown-item has-icon text-danger" style="background: none; border: none; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i>Logout
+                    </button>
+                </form>
             </div>
         </li>
     </ul>

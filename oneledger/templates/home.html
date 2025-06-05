@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}Welcome to OneLedger{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="jumbotron mt-4">
+            <h1 class="display-4">Welcome to OneLedger!</h1>
+            <p class="lead">Your all-in-one solution for managing personal and small business finances.</p>
+            <hr class="my-4">
+            <p>Track expenses, manage budgets, handle payroll, and much more. Get started today!</p>
+            {% if current_user.is_authenticated %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('main.dashboard') }}" role="button">Go to Dashboard</a>
+            {% else %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}" role="button">Sign Up</a>
+                <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.login') }}" role="button">Log In</a>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <h2>Accounting</h2>
+                <p>Keep track of your income and expenses with our intuitive accounting module.</p>
+                <p><a class="btn btn-secondary" href="#" role="button">Learn More &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h2>Payroll</h2>
+                <p>Manage employee salaries, deductions, and payments effortlessly.</p>
+                <p><a class="btn btn-secondary" href="#" role="button">Learn More &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h2>Budgeting</h2>
+                <p>Create and monitor budgets to achieve your financial goals.</p>
+                <p><a class="btn btn-secondary" href="#" role="button">Learn More &raquo;</a></p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

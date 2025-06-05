@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Employee Management - Payroll - OneLedger
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>Employee Management</h2>
+        </div>
+        <div class="col-md-6 text-right">
+            <a href="{{ url_for('payroll.add_employee') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Employee
+            </a>
+        </div>
+    </div>
+
+    {% if employees.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">Full Name</th>
+                        <th scope="col">Job Title</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Date Hired</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees.items %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('payroll.view_employee', employee_id=employee.id) }}">{{ employee.full_name }}</a>
+                        </td>
+                        <td>{{ employee.job_title or 'N/A' }}</td>
+                        <td>{{ employee.email or 'N/A' }}</td>
+                        <td>{{ employee.date_hired.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if employee.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('payroll.view_employee', employee_id=employee.id) }}" class="btn btn-sm btn-outline-secondary mr-1" title="View Details"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('payroll.edit_employee', employee_id=employee.id) }}" class="btn btn-sm btn-outline-primary mr-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('payroll.toggle_active_employee', employee_id=employee.id) }}" style="display:inline;">
+                                {{ csrf_token_field() }} {# Assuming global CSRF or specific setup for POST links #}
+                                <button type="submit" class="btn btn-sm {% if employee.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                                        title="{% if employee.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                    {% if employee.is_active %}
+                                        <i class="fas fa-user-slash"></i>
+                                    {% else %}
+                                        <i class="fas fa-user-check"></i>
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination Links #}
+        <nav aria-label="Employee list navigation">
+            <ul class="pagination justify-content-center">
+                {% if employees.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('payroll.list_employees', page=employees.prev_num) }}">&laquo; Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>
+                {% endif %}
+
+                {% for page_num in employees.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if employees.page == page_num %}
+                            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('payroll.list_employees', page=page_num) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if employees.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('payroll.list_employees', page=employees.next_num) }}">Next &raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            No employees found. <a href="{{ url_for('payroll.add_employee') }}">Add your first employee!</a>
+        </div>
+    {% endif %}
+</div>
+
+{# Font Awesome for icons - ensure this is in your base layout or add here #}
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+
+{% endblock content %}
+
+{% macro csrf_token_field() %}
+    {% if csrf_token %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% endif %}
+{% endmacro %}

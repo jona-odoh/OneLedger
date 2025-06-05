@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OneLedger{% endblock %}</title>
+    <!-- Example: Link to a generic stylesheet or Bootstrap if you plan to use it -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add Bootstrap CSS (assuming you'll use Bootstrap for styling) -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top" style="background-color: #333;">
+            <div class="container">
+                <a class="navbar-brand mr-4" href="{{ url_for('main.home') }}">OneLedger</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarToggle">
+                    <div class="navbar-nav mr-auto">
+                        <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
+                        {% if current_user.is_authenticated %}
+                            <a class="nav-item nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                            <a class="nav-item nav-link" href="{{ url_for('accounting.list_transactions') }}">Transactions</a>
+                            <a class="nav-item nav-link" href="{{ url_for('accounting.profit_loss_statement') }}">P&L Statement</a>
+                            <a class="nav-item nav-link" href="{{ url_for('accounting.balance_sheet_report') }}">Balance Sheet</a>
+                            <a class="nav-item nav-link" href="{{ url_for('accounting.cash_flow_statement') }}">Cash Flow</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="payrollDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Payroll
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="payrollDropdown">
+                                    <a class="dropdown-item" href="{{ url_for('payroll.list_employees') }}">Employees</a>
+                                    <a class="dropdown-item" href="{{ url_for('payroll.list_pay_periods') }}">Pay Periods</a>
+                                    <a class="dropdown-item" href="{{ url_for('payroll.initiate_payroll_run') }}">Run Payroll</a>
+                                    {# Add more payroll links here, e.g., list all payslips, payroll reports #}
+                                </div>
+                            </li>
+                        {% endif %}
+                    </div>
+                    <!-- Navbar Right Side -->
+                    <div class="navbar-nav">
+                        {% if current_user.is_authenticated %}
+                            <a class="nav-item nav-link" href="#">Settings</a> <!-- Placeholder -->
+                            <a class="nav-item nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+                        {% else %}
+                            <a class="nav-item nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                            <a class="nav-item nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="container mt-5 pt-5">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container mt-4">
+        <p class="text-center text-muted">&copy; 2024 OneLedger Inc. All rights reserved.</p>
+    </footer>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

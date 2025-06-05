@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - OneLedger{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="mt-4">Dashboard</h1>
+        <hr>
+        {% if current_user.is_authenticated %}
+            <h3>Welcome to your Dashboard, {{ current_user.username }}!</h3>
+            <p>This is your personalized dashboard where you can manage your finances.</p>
+            <!-- Add more dashboard-specific content here -->
+            <ul>
+                <li>View Account Summaries (Placeholder)</li>
+                <li>Manage Transactions (Placeholder)</li>
+                <li>Review Budgets (Placeholder)</li>
+            </ul>
+        {% else %}
+            <p>Please <a href="{{ url_for('auth.login') }}">log in</a> to view your dashboard.</p>
+        {% endif %}
+    </div>
+{% endblock content %}

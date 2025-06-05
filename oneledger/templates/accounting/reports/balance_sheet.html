@@ -1,0 +1,145 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Balance Sheet - OneLedger
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12 text-center">
+            <h2>Balance Sheet</h2>
+            {% if data and data.as_of_date %}
+                <p class="lead">As of: {{ data.as_of_date.strftime('%B %d, %Y') }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Report Date</h5>
+                    <form method="POST" action="{{ url_for('accounting.balance_sheet_report') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="form-row">
+                            <div class="form-group col-md-8">
+                                {{ form.as_of_date.label(class="form-control-label") }}
+                                {{ form.as_of_date(class="form-control") }}
+                                {% if form.as_of_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.as_of_date.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-4 align-self-end">
+                                {{ form.submit(class="btn btn-primary btn-block") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <div class="row">
+        <!-- Assets -->
+        <div class="col-md-4">
+            <h4 class="text-center">Assets</h4>
+            <table class="table table-sm">
+                {% if data.asset_transactions_list %}
+                    {% for asset in data.asset_transactions_list %}
+                    <tr>
+                        <td>{{ asset.description }} <small class="text-muted">({{ asset.date.strftime('%Y-%m-%d') }})</small></td>
+                        <td class="text-right">{{ "%.2f"|format(asset.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="2" class="text-center text-muted">No asset transactions.</td></tr>
+                {% endif %}
+                <tr class="table-active font-weight-bold">
+                    <td><strong>Total Assets</strong></td>
+                    <td class="text-right"><strong>{{ "%.2f"|format(data.total_assets) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Liabilities -->
+        <div class="col-md-4">
+            <h4 class="text-center">Liabilities</h4>
+            <table class="table table-sm">
+                {% if data.liability_transactions_list %}
+                    {% for liability in data.liability_transactions_list %}
+                    <tr>
+                        <td>{{ liability.description }} <small class="text-muted">({{ liability.date.strftime('%Y-%m-%d') }})</small></td>
+                        <td class="text-right">{{ "%.2f"|format(liability.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="2" class="text-center text-muted">No liability transactions.</td></tr>
+                {% endif %}
+                <tr class="table-active font-weight-bold">
+                    <td><strong>Total Liabilities</strong></td>
+                    <td class="text-right"><strong>{{ "%.2f"|format(data.total_liabilities) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Equity -->
+        <div class="col-md-4">
+            <h4 class="text-center">Equity</h4>
+            <table class="table table-sm">
+                <tr>
+                    <td>Retained Earnings</td>
+                    <td class="text-right">{{ "%.2f"|format(data.retained_earnings) }}</td>
+                </tr>
+                {# Add other equity components here if model expands #}
+                <tr class="table-active font-weight-bold">
+                    <td><strong>Total Equity</strong></td>
+                    <td class="text-right"><strong>{{ "%.2f"|format(data.total_equity) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h5 class="text-center">Accounting Equation Check</h5>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <td>Total Liabilities + Total Equity</td>
+                        <td class="text-right">{{ "%.2f"|format(data.total_liabilities + data.total_equity) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Assets</td>
+                        <td class="text-right">{{ "%.2f"|format(data.total_assets) }}</td>
+                    </tr>
+                    <tr class="{% if (data.total_assets - (data.total_liabilities + data.total_equity))|abs < 0.001 %}table-success{% else %}table-danger{% endif %}">
+                        <td><strong>Assets - (Liabilities + Equity)</strong></td>
+                        <td class="text-right">
+                            <strong>{{ "%.2f"|format(data.total_assets - (data.total_liabilities + data.total_equity)) }}</strong>
+                            <br><small>(Should be close to 0.00)</small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-center text-muted small">
+                Note: This is a simplified Balance Sheet based on available transaction types.
+                For a comprehensive Balance Sheet, a full chart of accounts and double-entry bookkeeping principles are necessary.
+                'Assets' and 'Liabilities' are based on transactions explicitly marked with these types.
+                'Equity' is primarily 'Retained Earnings' (cumulative income minus cumulative expenses).
+            </p>
+        </div>
+    </div>
+
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            Please select an "As of Date" and click "Generate Report" to view the Balance Sheet.
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

@@ -1,0 +1,228 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Edit Payslip - {{ payslip.employee_record.full_name }} - {{ payslip.pay_period_info.name }}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <form method="POST" action="{{ url_for('payroll.edit_payslip', payslip_id=payslip.id) }}" id="payslip-edit-form">
+        {{ form.hidden_tag() }} <!-- CSRF token -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Edit Payslip for: {{ payslip.employee_record.full_name }}</h3>
+                <p class="text-muted">Pay Period: {{ payslip.pay_period_info.name }} ({{ payslip.pay_period_info.start_date.strftime('%b %d, %Y') }} - {{ payslip.pay_period_info.end_date.strftime('%b %d, %Y') }})</p>
+            </div>
+
+            <div class="card-body">
+                <h4>Earnings & Basic Info</h4>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.gross_salary.label(class="form-control-label") }}
+                        {{ form.gross_salary(class="form-control calculation-trigger" + (" is-invalid" if form.gross_salary.errors else "")) }}
+                        {% if form.gross_salary.errors %}<div class="invalid-feedback">{% for error in form.gross_salary.errors %}<span>{{ error }}</span>{% endfor %}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ form.notes.label(class="form-control-label") }}
+                    {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows=3) }}
+                    {% if form.notes.errors %}<div class="invalid-feedback">{% for error in form.notes.errors %}<span>{{ error }}</span>{% endfor %}</div>{% endif %}
+                </div>
+
+                <hr>
+                <h4>Additions</h4>
+                <div id="additions-list" class="mb-2">
+                    {% for item_sub_form in form.additions %}
+                    <div class="form-row item-row mb-2 existing-item">
+                        {{ item_sub_form.hidden_tag() }} {# If there are hidden fields in PayslipItemLineForm like an ID #}
+                        <div class="col-md-5">
+                            {{ item_sub_form.description(class="form-control form-control-sm item-description calculation-trigger", placeholder="Description") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ item_sub_form.amount(class="form-control form-control-sm item-amount calculation-trigger", placeholder="Amount") }}
+                        </div>
+                        <div class="col-md-3 item-options">
+                            <div class="form-check form-check-inline">
+                                {{ item_sub_form.is_taxable(class="form-check-input item-is-taxable calculation-trigger") }}
+                                {{ item_sub_form.is_taxable.label(class="form-check-label small") }}
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-button"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-addition-button" class="btn btn-sm btn-outline-success mb-3"><i class="fas fa-plus"></i> Add Addition</button>
+
+                <hr>
+                <h4>Deductions</h4>
+                <div id="deductions-list" class="mb-2">
+                     {% for item_sub_form in form.deductions %}
+                    <div class="form-row item-row mb-2 existing-item">
+                        {{ item_sub_form.hidden_tag() }}
+                        <div class="col-md-5">
+                            {{ item_sub_form.description(class="form-control form-control-sm item-description calculation-trigger", placeholder="Description") }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ item_sub_form.amount(class="form-control form-control-sm item-amount calculation-trigger", placeholder="Amount") }}
+                        </div>
+                        <div class="col-md-3 item-options">
+                             <div class="form-check form-check-inline">
+                                {{ item_sub_form.is_pre_tax(class="form-check-input item-is-pre-tax calculation-trigger") }}
+                                {{ item_sub_form.is_pre_tax.label(class="form-check-label small") }}
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-button"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-deduction-button" class="btn btn-sm btn-outline-danger mb-3"><i class="fas fa-plus"></i> Add Deduction</button>
+
+                <hr>
+                <h4>Summary (Calculated)</h4>
+                <table class="table table-sm summary-table">
+                    <tbody>
+                        <tr><td>Base Salary (Gross):</td><td id="summary-gross" class="text-right">{{ "%.2f"|format(payslip.gross_salary) }}</td></tr>
+                        <tr><td>Total Additions:</td><td id="summary-total-additions" class="text-right text-success">{{ "%.2f"|format(payslip.total_additions) }}</td></tr>
+                        <tr><td>Total Deductions:</td><td id="summary-total-deductions" class="text-right text-danger">{{ "%.2f"|format(payslip.total_deductions) }}</td></tr>
+                        <tr><td>Taxable Income:</td><td id="summary-taxable-income" class="text-right">{{ "%.2f"|format(payslip.taxable_income) }}</td></tr>
+                        <tr><td>Income Tax (Est. @10%):</td><td id="summary-income-tax" class="text-right text-danger">{{ "%.2f"|format(payslip.income_tax) }}</td></tr>
+                        <tr class="font-weight-bold"><td>Net Pay:</td><td id="summary-net-pay" class="text-right">{{ "%.2f"|format(payslip.net_pay) }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer text-center">
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+                <a href="{{ url_for('payroll.list_payslips_for_period', pay_period_id=payslip.pay_period_id) }}" class="btn btn-secondary btn-lg">Cancel</a>
+                 {# Add other actions like "Mark as Processed" or "Mark as Paid" later #}
+            </div>
+        </div>
+    </form>
+</div>
+
+{# Template for new addition/deduction items (for JavaScript) #}
+<template id="payslip-item-template">
+    <div class="form-row item-row mb-2">
+        <div class="col-md-5">
+            <input type="text" name="description" class="form-control form-control-sm item-description calculation-trigger" placeholder="Description" required>
+        </div>
+        <div class="col-md-3">
+            <input type="number" step="0.01" name="amount" class="form-control form-control-sm item-amount calculation-trigger" placeholder="Amount" required>
+        </div>
+        <div class="col-md-3 item-options">
+            {# Contextual options will be added here by JS #}
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-danger remove-item-button"><i class="fas fa-trash-alt"></i></button>
+        </div>
+    </div>
+</template>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+<script>
+// Basic JS for adding/removing items and triggering recalculation (actual calculation on server)
+document.addEventListener('DOMContentLoaded', function() {
+    function setupItemList(listId, addButtonId, templateId, itemType) {
+        const list = document.getElementById(listId);
+        const addButton = document.getElementById(addButtonId);
+        const template = document.getElementById(templateId).innerHTML;
+        let itemIndex = list.querySelectorAll('.item-row').length; // Start index based on existing items
+
+        addButton.addEventListener('click', function() {
+            const newItemRow = document.createElement('div');
+            newItemRow.innerHTML = template
+                .replace(/name="description"/g, `name="${listId.replace('-list','')}-${itemIndex}-description"`)
+                .replace(/name="amount"/g, `name="${listId.replace('-list','')}-${itemIndex}-amount"`);
+
+            const optionsDiv = newItemRow.querySelector('.item-options');
+            if (itemType === 'addition') {
+                optionsDiv.innerHTML = `<div class="form-check form-check-inline">
+                                            <input type="checkbox" name="${listId.replace('-list','')}-${itemIndex}-is_taxable" class="form-check-input item-is-taxable calculation-trigger" checked>
+                                            <label class="form-check-label small">Taxable</label>
+                                        </div>`;
+            } else if (itemType === 'deduction') {
+                 optionsDiv.innerHTML = `<div class="form-check form-check-inline">
+                                            <input type="checkbox" name="${listId.replace('-list','')}-${itemIndex}-is_pre_tax" class="form-check-input item-is-pre-tax calculation-trigger">
+                                            <label class="form-check-label small">Pre-tax</label>
+                                        </div>`;
+            }
+
+            list.appendChild(newItemRow.firstElementChild); // Appends the .item-row div
+            itemIndex++;
+            attachRemoveListeners();
+            attachCalculationTriggers();
+        });
+    }
+
+    function attachRemoveListeners() {
+        document.querySelectorAll('.remove-item-button').forEach(button => {
+            button.removeEventListener('click', handleRemoveItem); // Avoid double binding
+            button.addEventListener('click', handleRemoveItem);
+        });
+    }
+
+    function handleRemoveItem(event) {
+        event.target.closest('.item-row').remove();
+        // Consider triggering recalculation if needed, or let server handle on submit
+    }
+
+    function attachCalculationTriggers() {
+        // This is just to flag that a calculation *could* happen client-side for UX
+        // Actual calculation is server-side.
+        document.querySelectorAll('.calculation-trigger').forEach(input => {
+            input.removeEventListener('change', handleInputChange);
+            input.addEventListener('change', handleInputChange);
+        });
+    }
+
+    function handleInputChange() {
+        // console.log("An input that affects calculation has changed.");
+        // For a better UX, you could implement client-side calculation previews here.
+        // For now, we rely on server-side calculation upon form submission.
+    }
+
+    setupItemList('additions-list', 'add-addition-button', 'payslip-item-template', 'addition');
+    setupItemList('deductions-list', 'add-deduction-button', 'payslip-item-template', 'deduction');
+    attachRemoveListeners(); // For items potentially rendered by server
+    attachCalculationTriggers(); // For items potentially rendered by server
+});
+
+// Helper macro to render existing items (used in the Jinja part)
+// This should be defined in a way Flask can find it or inline it above.
+// For this setup, I'll assume it would be a Jinja macro if this were a .jinja file.
+// Since this is inside create_file_with_block, I can't define Jinja macros easily.
+// The Python route will pass the form with populated FieldLists, and the template loops through them.
+// The render_payslip_item macro is conceptual here for what the Jinja loop does.
+/*
+{% macro render_payslip_item(item_form, index, type) %}
+    <div class="form-row item-row mb-2">
+        <div class="col-md-5">
+            {{ item_form.description(class="form-control form-control-sm item-description calculation-trigger", placeholder="Description") }}
+        </div>
+        <div class="col-md-3">
+            {{ item_form.amount(class="form-control form-control-sm item-amount calculation-trigger", placeholder="Amount") }}
+        </div>
+        <div class="col-md-3 item-options">
+            {% if type == 'addition' %}
+            <div class="form-check form-check-inline">
+                {{ item_form.is_taxable(class="form-check-input item-is-taxable calculation-trigger") }}
+                {{ item_form.is_taxable.label(class="form-check-label small") }}
+            </div>
+            {% elif type == 'deduction' %}
+            <div class="form-check form-check-inline">
+                {{ item_form.is_pre_tax(class="form-check-input item-is-pre-tax calculation-trigger") }}
+                {{ item_form.is_pre_tax.label(class="form-check-label small") }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-danger remove-item-button"><i class="fas fa-trash-alt"></i></button>
+        </div>
+    </div>
+{% endmacro %}
+*/
+</script>
+{% endblock %}

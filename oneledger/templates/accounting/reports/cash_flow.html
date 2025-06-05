@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Cash Flow Statement - OneLedger
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12 text-center">
+            <h2>Cash Flow Statement</h2>
+            {% if data and data.start_date and data.end_date %}
+                <p class="lead">
+                    For the period: {{ data.start_date.strftime('%B %d, %Y') }} to {{ data.end_date.strftime('%B %d, %Y') }}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Report Period</h5>
+                    <form method="POST" action="{{ url_for('accounting.cash_flow_statement') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                {{ form.start_date.label(class="form-control-label") }}
+                                {{ form.start_date(class="form-control") }}
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.start_date.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-5">
+                                {{ form.end_date.label(class="form-control-label") }}
+                                {{ form.end_date(class="form-control") }}
+                                {% if form.end_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.end_date.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-2 align-self-end">
+                                {{ form.submit(class="btn btn-primary btn-block", value="Generate") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="table-active">
+                        <th colspan="2">Cash Flow Statement Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Operating Activities -->
+                    <tr>
+                        <td colspan="2"><strong>Cash Flows from Operating Activities:</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="pl-4">Net Income for the Period</td>
+                        <td class="text-right">{{ "%.2f"|format(data.net_income_for_period) }}</td>
+                    </tr>
+                    {# Add adjustments for non-cash items here if model supports (e.g., Depreciation) #}
+                    <tr class="font-weight-bold">
+                        <td class="pl-4">Net Cash from Operating Activities</td>
+                        <td class="text-right">{{ "%.2f"|format(data.cash_from_operating) }}</td>
+                    </tr>
+
+                    <!-- Investing Activities -->
+                    <tr>
+                        <td colspan="2"><strong>Cash Flows from Investing Activities:</strong></td>
+                    </tr>
+                    {% if data.investing_transactions_list %}
+                        {% for transaction in data.investing_transactions_list %}
+                        <tr>
+                            <td class="pl-4">
+                                {% if -transaction.amount < 0 %}
+                                    Purchase of Asset: {{ transaction.description }}
+                                {% else %}
+                                    Sale of Asset: {{ transaction.description }}
+                                {% endif %}
+                                <small class="text-muted">({{ transaction.date.strftime('%Y-%m-%d') }})</small>
+                            </td>
+                            <td class="text-right">{{ "%.2f"|format(-transaction.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="2" class="pl-4 text-muted">No investing activities during this period.</td></tr>
+                    {% endif %}
+                    <tr class="font-weight-bold">
+                        <td class="pl-4">Net Cash from Investing Activities</td>
+                        <td class="text-right">{{ "%.2f"|format(data.cash_from_investing) }}</td>
+                    </tr>
+
+                    <!-- Financing Activities -->
+                    <tr>
+                        <td colspan="2"><strong>Cash Flows from Financing Activities:</strong></td>
+                    </tr>
+                     {% if data.financing_transactions_list %}
+                        {% for transaction in data.financing_transactions_list %}
+                        <tr>
+                            <td class="pl-4">
+                                {% if transaction.amount > 0 %}
+                                    Proceeds from Liability: {{ transaction.description }}
+                                {% else %}
+                                    Repayment of Liability: {{ transaction.description }}
+                                {% endif %}
+                                <small class="text-muted">({{ transaction.date.strftime('%Y-%m-%d') }})</small>
+                            </td>
+                            <td class="text-right">{{ "%.2f"|format(transaction.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="2" class="pl-4 text-muted">No financing activities during this period.</td></tr>
+                    {% endif %}
+                    <tr class="font-weight-bold">
+                        <td class="pl-4">Net Cash from Financing Activities</td>
+                        <td class="text-right">{{ "%.2f"|format(data.cash_from_financing) }}</td>
+                    </tr>
+
+                    <!-- Net Change in Cash -->
+                    <tr class="table-active font-weight-bold">
+                        <td>Net Increase/(Decrease) in Cash</td>
+                        <td class="text-right {% if data.net_cash_flow >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ "%.2f"|format(data.net_cash_flow) }}
+                        </td>
+                    </tr>
+                    {# Add Cash at Beginning/End of Period if implemented #}
+                </tbody>
+            </table>
+            <p class="text-center text-muted small">
+                Note: This is a simplified Cash Flow Statement. Assumes income/expenses are cash-based.
+                Investing activities: Positive 'asset' transaction amounts are treated as purchases (cash outflows).
+                Financing activities: Positive 'liability' transaction amounts are treated as borrowings (cash inflows).
+            </p>
+        </div>
+    </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            Please select a period and click "Generate" to view the Cash Flow Statement.
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

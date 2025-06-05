@@ -1,0 +1,145 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Profit & Loss Statement - OneLedger
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12 text-center">
+            <h2>Profit & Loss Statement</h2>
+            {% if data and data.start_date and data.end_date %}
+                <p class="lead">
+                    For the period: {{ data.start_date.strftime('%B %d, %Y') }} to {{ data.end_date.strftime('%B %d, %Y') }}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Report Period</h5>
+                    <form method="POST" action="{{ url_for('accounting.profit_loss_statement') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                {{ form.start_date.label(class="form-control-label") }}
+                                {{ form.start_date(class="form-control") }}
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.start_date.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-5">
+                                {{ form.end_date.label(class="form-control-label") }}
+                                {{ form.end_date(class="form-control") }}
+                                {% if form.end_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.end_date.errors %}<span>{{ error }}</span>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group col-md-2 align-self-end">
+                                {{ form.submit(class="btn btn-primary btn-block") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <div class="row">
+        <!-- Summary -->
+        <div class="col-md-6 offset-md-3">
+            <h4 class="text-center mb-3">Summary</h4>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <td><strong>Total Income</strong></td>
+                        <td class="text-right text-success"><strong>{{ "%.2f"|format(data.total_income) }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Expenses</strong></td>
+                        <td class="text-right text-danger"><strong>{{ "%.2f"|format(data.total_expenses) }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Net Profit</strong></td>
+                        <td class="text-right {% if data.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            <strong>{{ "%.2f"|format(data.net_profit) }}</strong>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row">
+        <!-- Income Details -->
+        <div class="col-md-6">
+            <h4 class="text-center mb-3">Income Transactions</h4>
+            {% if data.income_transactions_list %}
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in data.income_transactions_list %}
+                        <tr>
+                            <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ transaction.description }}</td>
+                            <td class="text-right text-success">{{ "%.2f"|format(transaction.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center text-muted">No income transactions in this period.</p>
+            {% endif %}
+        </div>
+
+        <!-- Expense Details -->
+        <div class="col-md-6">
+            <h4 class="text-center mb-3">Expense Transactions</h4>
+            {% if data.expense_transactions_list %}
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in data.expense_transactions_list %}
+                        <tr>
+                            <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ transaction.description }}</td>
+                            <td class="text-right text-danger">{{ "%.2f"|format(transaction.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center text-muted">No expense transactions in this period.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            Please select a period and click "Generate Report" to view the Profit & Loss statement.
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}
